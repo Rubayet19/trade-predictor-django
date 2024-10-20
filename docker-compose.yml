@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   web:
     build: .
@@ -10,8 +8,4 @@ services:
       - .env
     ports:
       - "8000:8000"
-    depends_on:
-      - db
 
-volumes:
-  postgres_data:
