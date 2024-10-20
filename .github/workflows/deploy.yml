@@ -38,8 +38,16 @@ jobs:
           DB_PORT: ${{ secrets.DB_PORT }}
           ALPHA_VANTAGE_API_KEY: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
         run: |
-          scp -o StrictHostKeyChecking=no -i ec2_key.pem -r . ec2-user@${{ secrets.EC2_HOST }}:~/django_project/
+          # Create a compressed archive of the project files
+          tar -czf django_project.tar.gz *
+      
+          # Copy the archive to the EC2 instance
+          scp -o StrictHostKeyChecking=no -i ec2_key.pem django_project.tar.gz ec2-user@${{ secrets.EC2_HOST }}:~
+      
+          # SSH into EC2, extract files, set up environment, and run Docker Compose
           ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ secrets.EC2_HOST }} "
+            mkdir -p ~/django_project &&
+            tar -xzf ~/django_project.tar.gz -C ~/django_project &&
             cd ~/django_project &&
             echo 'DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY' >> .env &&
             echo 'DB_NAME=$DB_NAME' >> .env &&
@@ -50,3 +58,4 @@ jobs:
             echo 'ALPHA_VANTAGE_API_KEY=$ALPHA_VANTAGE_API_KEY' >> .env &&
             docker-compose up -d --build
           "
+
