@@ -16,9 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.http import HttpResponse
+
+# A simple view for the root URL
+def home(request):
+    return HttpResponse("Welcome to the Finance Project!")
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('financial_data/', include('financial_data.urls')),
+    path('', home),
 ]
 
