@@ -139,13 +139,13 @@ def get_report(request):
         if report_format == 'pdf':
             buffer = io.BytesIO()
             p = canvas.Canvas(buffer)
-            y = 750  # Starting y position
+            y = 750
             for line in error_message.split('\n'):
                 p.drawString(50, y, line)
-                y -= 15  # Move to next line
-                if y < 50:  # If we're at the bottom of the page
-                    p.showPage()  # Start a new page
-                    y = 750  # Reset y position
+                y -= 15
+                if y < 50:
+                    p.showPage()
+                    y = 750
             p.showPage()
             p.save()
             buffer.seek(0)

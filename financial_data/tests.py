@@ -42,7 +42,7 @@ class BacktestingTestCase(TestCase):
         # Set MA windows larger than our dataset to prevent any trades
         result = backtest_strategy(self.symbol, 10000, 100, 200)
         self.assertEqual(result['trades_executed'], 0)
-        self.assertEqual(result['total_return'], 0.0)  # Assuming no trades means no return
+        self.assertEqual(result['total_return'], 0.0)
 
     def test_all_in_trade(self):
         # Set MA windows to trigger trades
@@ -138,8 +138,8 @@ class ReportGenerationTestCase(TestCase):
     @patch('financial_data.views.generate_report')
     @patch('financial_data.views.generate_pdf_report')
     def test_get_report_pdf(self, mock_generate_pdf_report, mock_generate_report):
-        mock_generate_report.return_value = ({}, None)  # Dummy return value
-        mock_generate_pdf_report.return_value = b'PDF content'  # Dummy PDF content
+        mock_generate_report.return_value = ({}, None)
+        mock_generate_pdf_report.return_value = b'PDF content'
 
         response = self.client.post(
             self.report_url,
@@ -172,7 +172,7 @@ class ReportGenerationTestCase(TestCase):
     def test_get_report_missing_parameters(self):
         response = self.client.post(
             self.report_url,
-            data=json.dumps({'symbol': 'TEST'}),  # Missing other required parameters
+            data=json.dumps({'symbol': 'TEST'}),
             content_type='application/json'
         )
 

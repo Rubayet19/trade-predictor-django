@@ -2,7 +2,6 @@ import os
 import requests
 import time
 from datetime import datetime
-from django.conf import settings
 from dotenv import load_dotenv
 from django.db import transaction
 from .models import StockData
@@ -33,7 +32,7 @@ def fetch_stock_data(symbol, start_date, end_date):
             if 'Note' in data:
                 # Alpha Vantage returns a 'Note' key when rate limit is hit
                 logger.warning(f"Rate limit hit for {symbol}. Waiting before retry.")
-                time.sleep(60)  # Wait for 60 seconds before retrying
+                time.sleep(60)
                 continue
 
             if 'Time Series (Daily)' not in data:
@@ -67,7 +66,7 @@ def fetch_stock_data(symbol, start_date, end_date):
                 )
 
             logger.info(f"Successfully fetched and stored data for {symbol}")
-            return  # Success, exit the function
+            return
 
         except requests.Timeout:
             logger.error(f"Timeout occurred while fetching data for {symbol}")
@@ -79,7 +78,7 @@ def fetch_stock_data(symbol, start_date, end_date):
             logger.error(f"An unexpected error occurred for {symbol}: {e}")
 
         if attempt < max_retries - 1:
-            wait_time = 2 ** attempt  # Exponential backoff
+            wait_time = 2 ** attempt
             logger.info(f"Retrying in {wait_time} seconds...")
             time.sleep(wait_time)
         else:

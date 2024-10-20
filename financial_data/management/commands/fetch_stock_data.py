@@ -2,9 +2,6 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from financial_data.stock_data_fetcher import fetch_stock_data
 from datetime import timedelta
-from financial_data.models import StockData
-from django.core.validators import MinValueValidator
-from django.core.exceptions import ValidationError
 
 
 class Command(BaseCommand):
@@ -20,7 +17,6 @@ class Command(BaseCommand):
         years = options['years']
         days = options['days']
 
-        # Validate input: at least one of 'years' or 'days' should be positive
         if years < 0 or days < 0:
             self.stderr.write(self.style.ERROR('Years and days must be non-negative integers'))
             return
@@ -28,19 +24,17 @@ class Command(BaseCommand):
             self.stderr.write(self.style.ERROR('You must specify either --years or --days or both'))
             return
 
-        # Calculate date range
         end_date = timezone.now().date()
         start_date = end_date
 
-        # Subtract years if specified
+
         if years > 0:
             try:
                 start_date = start_date.replace(year=start_date.year - years)
             except ValueError:
-                # Handle leap year case if the current day doesn't exist in the previous year (e.g., Feb 29)
+                # Handle leap year case if the current day doesn't exist in the previous year
                 start_date = start_date - timedelta(days=365 * years)
 
-        # Subtract days if specified
         if days > 0:
             start_date -= timedelta(days=days)
 

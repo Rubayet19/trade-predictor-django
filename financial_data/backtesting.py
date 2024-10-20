@@ -1,9 +1,7 @@
-from django.db.models import Avg
 from django.core.exceptions import ValidationError
 from .models import StockData
 import pandas as pd
 from django.core.cache import cache
-from django.conf import settings
 import logging
 from decimal import Decimal
 
@@ -39,7 +37,6 @@ def backtest_strategy(symbol, initial_investment, buy_ma_window, sell_ma_window)
     df = get_stock_data(symbol)
     df['close_price'] = df['close_price'].astype(float)  # Convert to float for calculations
 
-    # Check for zero or negative prices
     if (df['close_price'] <= 0).any():
         logger.warning(f"Zero or negative prices found for {symbol}. Removing these entries.")
         df = df[df['close_price'] > 0]
@@ -66,7 +63,7 @@ def backtest_strategy(symbol, initial_investment, buy_ma_window, sell_ma_window)
             drawdown = (peak_value - portfolio_value) / peak_value
             max_drawdown = max(max_drawdown, drawdown)
 
-        # Buy signal: price is below the short-term MA and we have cash
+
         if row['close_price'] < row['buy_ma'] and cash > 0:
             shares_to_buy = cash // row['close_price']
             if shares_to_buy > 0:
@@ -81,7 +78,7 @@ def backtest_strategy(symbol, initial_investment, buy_ma_window, sell_ma_window)
                     'value': float(shares_to_buy * row['close_price'])
                 })
 
-        # Sell signal: price is above the long-term MA and we have shares
+
         elif row['close_price'] > row['sell_ma'] and shares > 0:
             sell_value = shares * row['close_price']
             cash += sell_value
