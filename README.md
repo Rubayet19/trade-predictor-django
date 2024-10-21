@@ -1,9 +1,5 @@
 # Financial Analysis Project
 
-![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
-![Django](https://img.shields.io/badge/django-3.2+-green.svg)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-
 A Django-based application for fetching financial data, performing backtesting, and generating predictions using machine learning. This project is designed for advanced developers but aims to provide beginner-friendly setup instructions. The public site is accessible at http://18.118.206.231:8000
 
 ## Features
