@@ -22,8 +22,7 @@ A Django-based application for fetching financial data, performing backtesting, 
 - [Database Management](#database-management)
 - [Usage](#usage)
 - [Deployment](#deployment)
-- [Contributing](#contributing)
-- [License](#license)
+
 
 ## Prerequisites
 
@@ -56,19 +55,48 @@ You'll also need an Alpha Vantage API key, which you can obtain for free at [Alp
 
 ## Configuration
 
-1. Create a `.env` file in the project root:
-   ```sh
-   touch .env
-   ```
+Create a .env file in the project root:
 
-2. Add the following environment variables to the `.env` file:
-   ```
-   DEBUG=True
-   SECRET_KEY=your_secret_key
-   DATABASE_URL=postgresql://user:password@localhost/dbname
-   ALPHA_VANTAGE_API_KEY=your_api_key
-   ```
-   Replace `your_secret_key` with a secure random string, and `your_api_key` with your Alpha Vantage API key.
+Add the following environment variables to the .env file:
+CopyDB_NAME=your_database_name
+DB_USER=your_database_user
+DB_PASSWORD=your_database_password
+DB_HOST=your_database_host
+DB_PORT=your_database_port
+ALPHA_VANTAGE_API_KEY=your_alpha_vantage_api_key
+Replace the placeholders with your actual database credentials and Alpha Vantage API key. For example:
+
+your_database_name might be something like finance_db
+your_database_user is typically postgres for local development
+your_database_password should be a strong, unique password
+your_database_host could be localhost for local development, or an AWS RDS endpoint for production
+your_database_port is typically 5432 for PostgreSQL
+your_alpha_vantage_api_key should be the API key you obtained from Alpha Vantage
+
+
+Ensure your .env file is added to .gitignore to prevent it from being committed to your repository:
+shCopyecho ".env" >> .gitignore
+
+For local development, you can use these environment variables in your Django settings like this:
+pythonCopyimport os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
+    }
+}
+
+ALPHA_VANTAGE_API_KEY = os.getenv('ALPHA_VANTAGE_API_KEY')
+
+For production deployment (e.g., on AWS), set these environment variables in your deployment environment rather than using a .env file.
 
 ## Database Management
 
