@@ -144,14 +144,41 @@ python manage.py runserver
 Access the application at `http://localhost:8000`.
 
 ## Deployment
+This project is set up for deployment on AWS EC2 with RDS PostgreSQL, but can be adapted for other cloud providers.
 
-This project is set up for deployment on AWS using Elastic Beanstalk, but can be adapted for other cloud providers.
+### AWS RDS Setup
+1. Create a PostgreSQL RDS instance:
+   - Go to AWS RDS Dashboard
+   - Click "Create database"
+   - Choose PostgreSQL
+   - Select Free tier or your preferred tier
+   - Set up these configurations:
+     - DB instance identifier: `your-db-name`
+     - Master username: `postgres` (or your preferred username)
+     - Master password: Set a secure password
+   - Under Connectivity:
+     - Make sure it's in the same VPC as your EC2
+     - Create new security group or use existing
+     - Make it publicly accessible if needed for development
 
-### AWS Deployment
+2. Configure RDS Security Group:
+   - Go to the RDS security group
+   - Add inbound rule:
+     - Type: PostgreSQL
+     - Port: 5432
+     - Source: Your EC2 security group ID
+     - Description: Allow EC2 access
 
-1. Install the AWS CLI and the EB CLI:
+3. Get your RDS endpoint:
+   - Go to RDS Dashboard
+   - Click on your database
+   - Find the endpoint URL
+   - Your DATABASE_URL will be: `postgresql://username:password@endpoint:5432/dbname`
+
+### AWS EC2 Deployment
+1. Install the AWS CLI:
    ```sh
-   pip install awscli awsebcli
+   pip install awscli
    ```
 
 2. Configure your AWS credentials:
@@ -159,40 +186,112 @@ This project is set up for deployment on AWS using Elastic Beanstalk, but can be
    aws configure
    ```
 
-3. Initialize your Elastic Beanstalk application:
+3. Launch an EC2 instance:
+   - Log into AWS Console
+   - Go to EC2 Dashboard
+   - Click "Launch Instance"
+   - Choose Amazon Linux 2 AMI
+   - Select instance type (t2.micro for testing)
+   - Configure security groups to allow HTTP (80), HTTPS (443), and SSH (22)
+   - Create or select an existing key pair
+   - Make sure it's in the same VPC as your RDS
+
+4. Connect to your EC2 instance:
    ```sh
-   eb init -p docker your-project-name
+   ssh -i /path/to/your-key-pair.pem ec2-user@your-instance-public-dns
    ```
 
-4. Create an Elastic Beanstalk environment:
+5. Set up your instance:
    ```sh
-   eb create your-environment-name
+   # Update system packages
+   sudo yum update -y
+   
+   # Install Docker
+   sudo yum install -y docker
+   sudo service docker start
+   sudo usermod -a -G docker ec2-user
+   
+   # Install Git
+   sudo yum install -y git
+   
+   # Install PostgreSQL client (for database management if needed)
+   sudo yum install -y postgresql15
    ```
 
-5. Set environment variables:
+6. Clone and deploy your project:
    ```sh
-   eb setenv SECRET_KEY=your_secret_key DATABASE_URL=your_rds_url ALPHA_VANTAGE_API_KEY=your_api_key
+   git clone your-repository-url
+   cd your-project-name
    ```
-   Note: Ensure you've set up an RDS PostgreSQL instance and use its URL for `DATABASE_URL`.
 
-6. Deploy your application:
+7. Set up environment variables:
    ```sh
-   eb deploy
+   # Create a .env file
+   cat << EOF > .env
+   SECRET_KEY=your_secret_key
+   DATABASE_URL=postgresql://username:password@your-rds-endpoint:5432/dbname
+   ALLOWED_HOSTS=your-ec2-public-dns,your-domain.com
+   DEBUG=False
+   EOF
    ```
+
+8. Build and run with Docker:
+   ```sh
+   docker build -t your-project-name .
+   docker run -d --env-file .env -p 80:8000 your-project-name
+   ```
+
+9. Run Django migrations:
+   ```sh
+   # Enter the Docker container
+   docker exec -it $(docker ps -q) bash
+   
+   # Run migrations
+   python manage.py migrate
+   
+   # Create superuser if needed
+   python manage.py createsuperuser
+   ```
+
+### Django Settings
+Make sure your Django settings.py is configured to use the DATABASE_URL:
+
+```python
+import os
+import dj_database_url
+
+DATABASES = {
+    'default': dj_database_url.config(
+        default=os.getenv('DATABASE_URL'),
+        conn_max_age=600
+    )
+}
+```
+
+### Requirements
+Add these to your requirements.txt:
+```
+psycopg2-binary
+dj-database-url
+```
 
 ### Docker
-
 For local testing with Docker:
-
 1. Build the image:
    ```sh
-   docker build -t financial-analysis-project .
+   docker build -t your-project-name .
    ```
-
 2. Run the container:
    ```sh
-   docker run -p 8000:8000 financial-analysis-project
+   docker run -p 8000:8000 --env-file .env your-project-name
    ```
+
+### Important Notes
+- Keep your database credentials secure and never commit them to version control
+- Consider using AWS Secrets Manager for production credentials
+- Make regular database backups
+- Monitor your RDS metrics in AWS CloudWatch
+- For production, set up proper SSL certificates and domain names
 
 ### CI/CD
 
