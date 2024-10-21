@@ -4,7 +4,7 @@
 ![Django](https://img.shields.io/badge/django-3.2+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
-A Django-based application for fetching financial data, performing backtesting, and generating predictions using machine learning.
+A Django-based application for fetching financial data, performing backtesting, and generating predictions using machine learning. This project is designed for advanced developers but aims to provide beginner-friendly setup instructions. The public site is accessible at http://18.118.206.231:8000
 
 ## Features
 
@@ -16,12 +16,24 @@ A Django-based application for fetching financial data, performing backtesting, 
 
 ## Table of Contents
 
+- [Prerequisites](#prerequisites)
 - [Installation](#installation)
-- [Usage](#usage)
+- [Configuration](#configuration)
 - [Database Management](#database-management)
+- [Usage](#usage)
 - [Deployment](#deployment)
 - [Contributing](#contributing)
 - [License](#license)
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+- Python 3.8 or higher
+- pip (Python package manager)
+- PostgreSQL
+- Docker (for containerization and deployment)
+
+You'll also need an Alpha Vantage API key, which you can obtain for free at [Alpha Vantage](https://www.alphavantage.co/support/#api-key).
 
 ## Installation
 
@@ -42,18 +54,50 @@ A Django-based application for fetching financial data, performing backtesting, 
    pip install -r requirements.txt
    ```
 
-4. Set up environment variables:
-   Create a `.env` file in the project root with the following:
+## Configuration
+
+1. Create a `.env` file in the project root:
+   ```sh
+   touch .env
+   ```
+
+2. Add the following environment variables to the `.env` file:
    ```
    DEBUG=True
    SECRET_KEY=your_secret_key
    DATABASE_URL=postgresql://user:password@localhost/dbname
    ALPHA_VANTAGE_API_KEY=your_api_key
    ```
+   Replace `your_secret_key` with a secure random string, and `your_api_key` with your Alpha Vantage API key.
 
-5. Apply migrations:
+## Database Management
+
+1. Apply migrations to set up the database schema:
    ```sh
    python manage.py migrate
+   ```
+
+2. (Optional) Create a superuser to access the Django admin interface:
+   ```sh
+   python manage.py createsuperuser
+   ```
+
+3. Seed the database with initial data:
+   ```sh
+   python manage.py seed_data
+   ```
+   Note: The `seed_data` command is a custom management command. If you haven't created it yet, you'll need to implement it in `yourapp/management/commands/seed_data.py`. Here's a basic example:
+
+   ```python
+   from django.core.management.base import BaseCommand
+   from yourapp.models import YourModel
+
+   class Command(BaseCommand):
+       help = 'Seed the database with initial data'
+
+       def handle(self, *args, **options):
+           YourModel.objects.create(name="Example", value=100)
+           self.stdout.write(self.style.SUCCESS('Successfully seeded the database'))
    ```
 
 ## Usage
@@ -65,71 +109,61 @@ python manage.py runserver
 
 Access the application at `http://localhost:8000`.
 
-## Database Management
-
-### Migrations
-
-Apply migrations:
-```sh
-python manage.py migrate
-```
-
-Create new migrations:
-```sh
-python manage.py makemigrations
-```
-
-### Seeding Data
-
-To seed the database:
-```sh
-python manage.py seed_data
-```
-
 ## Deployment
+
+This project is set up for deployment on AWS using Elastic Beanstalk, but can be adapted for other cloud providers.
 
 ### AWS Deployment
 
-1. Set up an AWS account and configure the AWS CLI.
+1. Install the AWS CLI and the EB CLI:
+   ```sh
+   pip install awscli awsebcli
+   ```
 
-2. Create an RDS PostgreSQL instance.
+2. Configure your AWS credentials:
+   ```sh
+   aws configure
+   ```
 
-3. Set up Elastic Beanstalk:
+3. Initialize your Elastic Beanstalk application:
    ```sh
    eb init -p docker your-project-name
+   ```
+
+4. Create an Elastic Beanstalk environment:
+   ```sh
    eb create your-environment-name
    ```
 
-4. Set environment variables:
+5. Set environment variables:
    ```sh
    eb setenv SECRET_KEY=your_secret_key DATABASE_URL=your_rds_url ALPHA_VANTAGE_API_KEY=your_api_key
    ```
+   Note: Ensure you've set up an RDS PostgreSQL instance and use its URL for `DATABASE_URL`.
 
-5. Deploy:
+6. Deploy your application:
    ```sh
    eb deploy
    ```
 
 ### Docker
 
-Build the image:
-```sh
-docker build -t financial-analysis-project .
-```
+For local testing with Docker:
 
-Run the container:
-```sh
-docker run -p 8000:8000 financial-analysis-project
-```
+1. Build the image:
+   ```sh
+   docker build -t financial-analysis-project .
+   ```
+
+2. Run the container:
+   ```sh
+   docker run -p 8000:8000 financial-analysis-project
+   ```
 
 ### CI/CD
 
-This project uses GitHub Actions for CI/CD. The workflow is defined in `.github/workflows/main.yml`.
+This project uses GitHub Actions for CI/CD. The workflow is defined in `.github/workflows/main.yml`. It automates testing, building the Docker image, and deploying to AWS Elastic Beanstalk.
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+To set up:
+1. Add your AWS credentials as secrets in your GitHub repository settings.
+2. Push your code to GitHub to trigger the workflow.
