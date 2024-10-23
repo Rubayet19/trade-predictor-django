@@ -136,6 +136,123 @@ python manage.py runserver
 
 Access the application at `http://localhost:8000`.
 
+
+## Initial Data Fetching
+
+Before using any analysis features, populate the database with stock data:
+
+```bash
+# Fetch last 30 days of AAPL data
+python manage.py fetch_stock_data AAPL --days 30
+
+# Fetch 2 years of historical data (recommended for backtesting)
+python manage.py fetch_stock_data AAPL --years 2
+
+# Combine both parameters
+python manage.py fetch_stock_data MSFT --years 1 --days 30
+```
+
+**Important Notes:**
+- Required before running any analysis
+- Alpha Vantage API rate limit: 5 requests/minute (free tier)
+- Initial fetch may take several minutes
+- Data is stored in PostgreSQL database
+
+Verify data population:
+```python
+# In Django shell
+python manage.py shell
+
+from financial_data.models import StockData
+# Check data count
+StockData.objects.filter(symbol='AAPL').count()
+# View latest entries
+StockData.objects.filter(symbol='AAPL').order_by('-date')[:5]
+```
+
+## Running Backtests
+
+Test trading strategies using historical data:
+
+```bash
+curl -X POST http://18.118.206.231:8000/financial_data/backtest/ \
+-H "Content-Type: application/json" \
+-d '{
+    "symbol": "AAPL",
+    "initial_investment": 10000,
+    "buy_ma_window": 50,
+    "sell_ma_window": 200
+}'
+```
+
+Python example:
+```python
+import requests
+
+response = requests.post(
+    "http://18.118.206.231:8000/financial_data/backtest/",
+    json={
+        "symbol": "AAPL",
+        "initial_investment": 10000,
+        "buy_ma_window": 50,
+        "sell_ma_window": 200
+    }
+)
+
+result = response.json()
+print(f"Final Portfolio Value: ${result['final_value']:,.2f}")
+```
+
+## Generating Predictions
+
+Get stock price predictions:
+
+```bash
+curl http://18.118.206.231:8000/financial_data/predict/?symbol=AAPL
+```
+
+Python example:
+```python
+import requests
+
+response = requests.get(
+    "http://18.118.206.231:8000/financial_data/predict/",
+    params={"symbol": "AAPL"}
+)
+
+predictions = response.json()
+```
+
+## Generating Reports
+
+Create PDF reports with analysis and visualizations:
+
+```bash
+curl "http://18.118.206.231:8000/financial_data/report/?symbol=AAPL&start_date=2024-01-01&end_date=2024-01-31&initial_investment=10000&buy_ma_window=50&sell_ma_window=200" \
+--output report.pdf
+```
+
+Python example:
+```python
+import requests
+
+response = requests.get(
+    "http://18.118.206.231:8000/financial_data/report/",
+    params={
+        "symbol": "AAPL",
+        "start_date": "2024-01-01",
+        "end_date": "2024-01-31",
+        "initial_investment": 10000,
+        "buy_ma_window": 50,
+        "sell_ma_window": 200
+    }
+)
+
+if response.status_code == 200:
+    with open("report.pdf", "wb") as f:
+        f.write(response.content)
+```
+
 ## Deployment
 This project is set up for deployment on AWS EC2 with RDS PostgreSQL, but can be adapted for other cloud providers.
 
