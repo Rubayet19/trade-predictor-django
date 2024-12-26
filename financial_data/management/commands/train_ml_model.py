@@ -1,14 +1,16 @@
 import joblib
 import pandas as pd
-import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime, timedelta
 from django.conf import settings
 from django.core.cache import cache
-import os
-import logging
+from django.core.management.base import BaseCommand
 from financial_data.models import StockData
 from django.db import transaction
 from django.core.exceptions import ValidationError
+import os
+import logging
 
 logger = logging.getLogger(__name__)
 
@@ -110,3 +112,62 @@ class StockPredictor:
         except Exception as e:
             logger.error(f"Error making predictions for {self.symbol}: {str(e)}")
             raise ValidationError(f"Error making predictions: {str(e)}")
+
+
+class Command(BaseCommand):
+    """
+    Django management command to train and save an ML model for a stock symbol.
+    """
+    help = 'Train machine learning model for a specific stock symbol'
+
+    def add_arguments(self, parser):
+        """
+        Add a command-line argument to specify the stock symbol.
+        """
+        parser.add_argument('symbol', type=str, help='Stock symbol to train the model for')  # **NEW**
+
+    def handle(self, *args, **kwargs):
+        """
+        Main logic for training the model.
+        """
+        symbol = kwargs['symbol']
+        self.stdout.write(f'Training model for symbol: {symbol}')
+
+        # Fetch data for training
+        data = StockData.objects.filter(symbol=symbol).order_by('date')
+        if not data.exists():
+            self.stderr.write(self.style.ERROR(f"No data available for symbol {symbol}"))
+            return
+
+        df = pd.DataFrame(list(data.values()))
+
+        # Features and target for ML
+        features = ['open_price', 'high_price', 'low_price', 'close_price', 'volume']
+        target = 'close_price'
+
+        try:
+            X = df[features]
+            y = df[target]
+
+            # Scale data
+            scaler = MinMaxScaler()
+            X_scaled = scaler.fit_transform(X)
+
+            # Train model
+            model = LinearRegression()
+            model.fit(X_scaled, y)
+
+            # Save the model and scaler
+            model_dir = os.path.join('financial_data', 'ml_models')
+            os.makedirs(model_dir, exist_ok=True)
+
+            model_path = os.path.join(model_dir, f'{symbol}_model.pkl')
+            scaler_path = os.path.join(model_dir, f'{symbol}_scaler.pkl')
+
+            joblib.dump(model, model_path)
+            joblib.dump(scaler, scaler_path)
+
+            self.stdout.write(self.style.SUCCESS(f'Successfully trained and saved model for {symbol}'))
+        except Exception as e:
+            logger.error(f"Error during training for {symbol}: {str(e)}")
+            self.stderr.write(self.style.ERROR(f"Error training model for {symbol}: {str(e)}"))
