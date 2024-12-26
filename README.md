@@ -1,6 +1,6 @@
 # Financial Analysis Project
 
-A Django-based application for fetching financial data, performing backtesting, and generating predictions using machine learning. This project is designed for advanced developers but aims to provide beginner-friendly setup instructions. The public site is accessible at http://18.118.206.231:8000
+A Django-based application for fetching financial data, performing backtesting, and generating predictions using machine learning. This project is designed for advanced developers but aims to provide beginner-friendly setup instructions. 
 
 ## Features
 
@@ -48,45 +48,7 @@ You'll also need an Alpha Vantage API key, which you can obtain for free at [Alp
    pip install -r requirements.txt
    ```
 
-## Configuration
-
-There are two ways to run this project: locally for development or on AWS for production.
-
-### Local Development Setup
-
-1. Install PostgreSQL locally:
-   ```sh
-   # For Ubuntu/Debian
-   sudo apt-get install postgresql postgresql-contrib
-   
-   # For MacOS using Homebrew
-   brew install postgresql
-   
-   # For Windows, download from https://www.postgresql.org/download/windows/
-   ```
-
-2. Create a local database:
-   ```sh
-   sudo -u postgres psql
-   CREATE DATABASE finance_db;
-   CREATE USER your_user WITH PASSWORD 'your_password';
-   GRANT ALL PRIVILEGES ON DATABASE finance_db TO your_user;
-   ```
-
-3. Create a `.env` file in the project root:
-   ```sh
-   # .env for local development
-   DB_NAME=finance_db
-   DB_USER=your_user
-   DB_PASSWORD=your_password
-   DB_HOST=localhost
-   DB_PORT=5432
-   ALPHA_VANTAGE_API_KEY=your_alpha_vantage_api_key
-   DEBUG=True
-   ALLOWED_HOSTS=localhost,127.0.0.1
-   ```
-
-### Production Setup (AWS)
+## Setup (AWS)
 
 For production, we use AWS RDS for the database. Create a different `.env` file:
 ```sh
@@ -172,10 +134,10 @@ StockData.objects.filter(symbol='AAPL').order_by('-date')[:5]
 
 ## Running Backtests
 
-Test trading strategies using historical data:
+Test trading strategies using historical data. To test out how it works you use this CURL command directly and using the public ip of my ec2 instance. Since it has only been trained on AAPL stocks it will only work for that.  
 
 ```bash
-curl -X POST http://18.118.206.231:8000/financial_data/backtest/ \
+curl -X POST http://3.130.162.114:8000/financial_data/backtest/ \
 -H "Content-Type: application/json" \
 -d '{
     "symbol": "AAPL",
@@ -185,42 +147,19 @@ curl -X POST http://18.118.206.231:8000/financial_data/backtest/ \
 }'
 ```
 
-Python example:
-```python
-import requests
-
-response = requests.post(
-    "http://18.118.206.231:8000/financial_data/backtest/",
-    json={
-        "symbol": "AAPL",
-        "initial_investment": 10000,
-        "buy_ma_window": 50,
-        "sell_ma_window": 200
-    }
-)
-
-result = response.json()
-print(f"Final Portfolio Value: ${result['final_value']:,.2f}")
-```
+After you setup your own ec2 instance, you can replace the ip with your own ec2 ip, stock symbol and timeframe.
 
 ## Generating Predictions
 
-Get stock price predictions:
+Before generating predictions, you have to train the model on a specific stock. the one I hosted works only for AAPL. you can train for any model by going to your project direct in you ec2 instance and use this command:
+
+python3 manage.py train_ml_model AAPL
+
+
+If you want to see how prediction looks, you check prediction for APPL from my instance.
 
 ```bash
-curl http://18.118.206.231:8000/financial_data/predict/?symbol=AAPL
-```
-
-Python example:
-```python
-import requests
-
-response = requests.get(
-    "http://18.118.206.231:8000/financial_data/predict/",
-    params={"symbol": "AAPL"}
-)
-
-predictions = response.json()
+curl http://3.130.162.114:8000/financial_data/predict/?symbol=AAPL
 ```
 
 ## Generating Reports
@@ -228,30 +167,24 @@ predictions = response.json()
 Create PDF reports with analysis and visualizations:
 
 ```bash
-curl "http://18.118.206.231:8000/financial_data/report/?symbol=AAPL&start_date=2024-01-01&end_date=2024-01-31&initial_investment=10000&buy_ma_window=50&sell_ma_window=200" \
---output report.pdf
+curl -X POST -H "Content-Type: application/json" \
+-d '{
+    "symbol": "AAPL",
+    "start_date": "2024-11-01",
+    "end_date": "2024-12-01",
+    "initial_investment": 10000,
+    "buy_ma_window": 5,
+    "sell_ma_window": 20,
+    "format": "pdf"
+}' \
+http://3.130.162.114:8000/financial_data/report/ --output AAPL_report.pdf
+
 ```
 
-Python example:
-```python
-import requests
+Example of how it should look:
+![image](https://github.com/user-attachments/assets/152953e5-3c75-4e19-a719-0bc00e20002c)
 
-response = requests.get(
-    "http://18.118.206.231:8000/financial_data/report/",
-    params={
-        "symbol": "AAPL",
-        "start_date": "2024-01-01",
-        "end_date": "2024-01-31",
-        "initial_investment": 10000,
-        "buy_ma_window": 50,
-        "sell_ma_window": 200
-    }
-)
 
-if response.status_code == 200:
-    with open("report.pdf", "wb") as f:
-        f.write(response.content)
-```
 
 ## Deployment
 This project is set up for deployment on AWS EC2 with RDS PostgreSQL, but can be adapted for other cloud providers.
