@@ -90,7 +90,7 @@ Make sure to use the appropriate moving average numbers according to the data fe
 ```bash
 curl -X POST "http://3.130.162.114:8000/financial_data/predict/" \
 -H "Content-Type: application/json" \
--d '{"symbol": "AAPL"}'
+-d '{"symbol": "IBM"}'
 
 ```
 
