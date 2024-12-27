@@ -10,9 +10,7 @@ A Django-based application for financial data analysis, backtesting, and machine
 * Create performance reports in PDF and JSON formats
 * Dockerized setup for easy deployment
 
-# Quick Start
-
-## Prerequisites
+# Prerequisites
 
 * Python 3.1+
 * pip (Python package manager)
@@ -20,7 +18,7 @@ A Django-based application for financial data analysis, backtesting, and machine
 * Docker
 * Alpha Vantage API key ([Alpha Vantage](https://www.alphavantage.co/support/#api-key))
 
-## Local Setup
+# Local Setup
 
 1. Clone and install:
 ```sh
@@ -71,7 +69,7 @@ For predictions, train a model for each stock symbol:
 python manage.py train_ml_model AAPL
 ```
 
-# Example API Usage
+# Demo API Examples
 
 A demo version is hosted at `3.130.162.114:8000`. You can test the functionality using these curl commands:
 
@@ -106,17 +104,12 @@ curl -X POST -H "Content-Type: application/json" \
 }' \
 http://3.130.162.114:8000/financial_data/report/ --output AAPL_report.pdf
 ```
-
-A report similar to this will be generated:
-![image](https://github.com/user-attachments/assets/57fdc16d-469a-4d59-82ea-9ea29634af51)
-
+This is how it may look:
+![image](https://github.com/user-attachments/assets/fa1d8fb0-ef4c-4f2f-96f8-80a483d39e77)
 
 
-**Note:** Replace `3.130.162.114` with your own server's IP address when you deploy your instance.
 
-# Optional: AWS Deployment
-
-If you want to deploy your own instance, follow these steps:
+# AWS Deployment (Optional)
 
 ## AWS RDS Setup
 
@@ -164,11 +157,37 @@ docker build -t financial-analysis .
 docker run -d --env-file .env -p 8000:8000 financial-analysis
 ```
 
-Once deployed, you can use the same API endpoints shown in the examples above, replacing `3.130.162.114` with your EC2 instance's public IP.
+## Post-Deployment Setup
+
+1. SSH into your EC2 instance:
+```sh
+ssh -i your-key.pem ec2-user@your-ec2-ip
+```
+
+2. Access your Docker container:
+```sh
+docker exec -it $(docker ps -q) bash
+```
+
+3. Fetch historical data for each stock you want to analyze:
+```sh
+python manage.py fetch_stock_data AAPL --years 2  # Fetch 2 years of AAPL data
+python manage.py fetch_stock_data MSFT --years 2  # Fetch 2 years of MSFT data
+# Repeat for other stocks
+```
+
+4. Train the ML model for each stock:
+```sh
+python manage.py train_ml_model AAPL  # Train model for AAPL
+python manage.py train_ml_model MSFT  # Train model for MSFT
+# Repeat for other stocks
+```
+
+After completing these steps, you can use the same API endpoints shown in the examples above, replacing `3.130.162.114` with your EC2 instance's public IP address.
 
 # CI/CD Configuration (Optional)
 
-If you want to set up automatic deployments, see the CI/CD configuration in `.github/workflows/main.yml` in the repository. Required GitHub secrets:
+Required GitHub secrets for automatic deployments:
 ```
 AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_KEY
@@ -176,3 +195,5 @@ EC2_HOST
 EC2_USERNAME
 EC2_SSH_KEY
 ```
+
+See `.github/workflows/main.yml` in the repository for the complete CI/CD configuration.
