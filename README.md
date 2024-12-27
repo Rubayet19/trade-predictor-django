@@ -80,10 +80,11 @@ curl -X POST http://3.130.162.114:8000/financial_data/backtest/ \
 -d '{
     "symbol": "AAPL",
     "initial_investment": 10000,
-    "buy_ma_window": 50,
-    "sell_ma_window": 200
+    "buy_ma_window": 5,
+    "sell_ma_window": 20
 }'
 ```
+Make sure to use the appropriate moving average numbers according to the data fetched
 
 ## Predictions Example
 ```bash
