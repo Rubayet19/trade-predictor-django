@@ -88,7 +88,10 @@ Make sure to use the appropriate moving average numbers according to the data fe
 
 ## Predictions Example
 ```bash
-curl http://3.130.162.114:8000/financial_data/predict/?symbol=AAPL
+curl -X POST "http://3.130.162.114:8000/financial_data/predict/" \
+-H "Content-Type: application/json" \
+-d '{"symbol": "AAPL"}'
+
 ```
 
 ## Report Generation Example
